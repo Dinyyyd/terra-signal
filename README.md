@@ -5,7 +5,8 @@ in the existing location controls. This study area uses MOD13Q1 NDVI, a 2020-202
 seasonal baseline and 2025 observations. Other locations retain the original
 archive; soil wetness is not NDVI. The original global archive remains the default.
 Canberra has no aligned temperature/rain/fire data and is excluded from compound
-analysis. Set `SATSCOPE_NDVI_REVIEW_PACKAGE` to the validated v2 ZIP for local use.
+analysis. The processed v2 review package is included at `data/ndvi/canberra_candidate_v2.zip`.
+Enable it with the commands below.
 No package means unavailable data, never fabricated observations.
 
 The NDVI candidate is an offline review feature, not a completed production
@@ -16,7 +17,7 @@ integration. Scientific limitations are listed below.
 From the project root in PowerShell:
 
 ```powershell
-.\.venv\Scripts\python.exe backend/scripts/verify_ndvi_export.py <path-to-candidate-v2.zip>
+.\.venv\Scripts\python.exe backend/scripts/verify_ndvi_export.py data/ndvi/canberra_candidate_v2.zip
 .\.venv\Scripts\python.exe -m pytest backend/tests -q
 npm --prefix frontend run build
 ```
@@ -24,7 +25,32 @@ npm --prefix frontend run build
 The API and command-line checker use the same complete-package validator.
 The Colab workflow is `notebooks/SAT_SCOPE_NDVI_Candidate_Validation.ipynb`;
 it uses the shared modules in `backend/ml`. Keep downloaded raster data and
-candidate exports outside version control.
+experimental candidate exports outside version control. The bundled v2 ZIP is
+the reviewed handoff snapshot, not raw imagery.
+
+### Run the bundled Canberra review
+
+Clone the contribution branch and open its folder:
+
+```powershell
+git clone --branch feature/ndvi-hackathon-pilot https://github.com/Dinyyyd/terra-signal.git
+cd terra-signal
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
+$env:SATSCOPE_NDVI_REVIEW_PACKAGE = (Resolve-Path data/ndvi/canberra_candidate_v2.zip).Path
+.\.venv\Scripts\python.exe -m uvicorn main:app --app-dir backend --host 127.0.0.1 --port 8000
+```
+
+In a second terminal at the project root:
+
+```powershell
+npm --prefix frontend ci
+npm --prefix frontend run dev
+```
+
+Open the frontend URL, sign in, and select Australia then Canberra (MODIS study
+area). Set the environment variable in each new backend terminal. Raw rasters
+are only needed to rerun the Colab processing, not to display this saved review.
 
 ### NDVI interpretation
 
