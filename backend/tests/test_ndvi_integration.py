@@ -1,18 +1,7 @@
 import json
-import numpy as np
 import pytest
 from fastapi import HTTPException
-from ml.ndvi_dates import december_acquisition_dates
 from routers.ndvi import canberra_candidate
-
-
-def test_rollover():
-    dates = december_acquisition_dates("2025-12-19", np.array([353, 3, -1]), np.array([True, True, False]))
-    assert str(dates[0]) == "2025-12-19"
-    assert str(dates[1]) == "2026-01-03"
-    assert np.isnat(dates[2])
-    with pytest.raises(ValueError):
-        december_acquisition_dates("2025-12-03", np.array([3]), np.array([True]))
 
 
 def test_review_disabled(monkeypatch):

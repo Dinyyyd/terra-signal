@@ -8,11 +8,39 @@ Canberra has no aligned temperature/rain/fire data and is excluded from compound
 analysis. Set `SATSCOPE_NDVI_REVIEW_PACKAGE` to the validated v2 ZIP for local use.
 No package means unavailable data, never fabricated observations.
 
-The working checkout targets `Dinyyyd/terra-signal`. Obsolete checkout backups
-have been removed. Downloaded NDVI files, validation ZIPs and research notes are
-preserved in `data/local_ndvi_research/` and ignored by Git. Do not force-add them.
 The NDVI candidate is an offline review feature, not a completed production
-integration; see [proposal review](docs/NDVI_PROPOSAL_REVIEW.md).
+integration. Scientific limitations are listed below.
+
+### Check a local NDVI export
+
+From the project root in PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe backend/scripts/verify_ndvi_export.py <path-to-candidate-v2.zip>
+.\.venv\Scripts\python.exe -m pytest backend/tests -q
+npm --prefix frontend run build
+```
+
+The API and command-line checker use the same complete-package validator.
+The Colab workflow is `notebooks/SAT_SCOPE_NDVI_Candidate_Validation.ipynb`;
+it uses the shared modules in `backend/ml`. Keep downloaded raster data and
+candidate exports outside version control.
+
+### NDVI interpretation
+
+The Canberra pilot compares 2025 MOD13Q1 observations with matching seasonal
+periods in 2020-2024. It uses matched pixels with at least four historical
+observations. Coverage of 80% and baseline NDVI of 0.1 are provisional reporting
+limits, not calibrated accuracy thresholds. Lower NDVI does not establish
+vegetation damage or its cause.
+
+Composite labels are not exact acquisition dates; year-end pixels can come from
+the following year. QA-accepted pixels include different land-cover types, and
+regional medians can hide local changes. HLS comparisons assess agreement over
+subsets, not ecological accuracy. Package validation checks internal consistency
+and source hashes; it does not recheck the original rasters in Drive. Canberra
+remains excluded from compound analysis until geography and observation periods
+align with the other indicators.
 
 NASA Space Apps Challenge · *Be An Earth System Trend Detective!*
 © TerraSignal
