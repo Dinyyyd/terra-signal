@@ -28,7 +28,6 @@ def test_review_preserves_missing_data(tmp_path, monkeypatch):
                    composite_end="2025-12-31")
     (tmp_path / "candidate_latest.json").write_text(json.dumps(payload))
     monkeypatch.setenv("SATSCOPE_NDVI_REVIEW_DIR", str(tmp_path))
-    result = canberra_candidate()
-    assert result["result"]["current"] is None
-    assert "composite_end" not in result["result"]
-    assert result["compound_eligible"] is False
+    with pytest.raises(HTTPException) as error:
+        canberra_candidate()
+    assert error.value.status_code == 503  # A standalone summary is no longer enough.

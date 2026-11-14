@@ -148,7 +148,7 @@ def list_locations() -> list[dict]:
                 float(np.mean([c["lon"] for c in group])) if group else None)
 
     global_lat, global_lon = center(cells)
-    national_name = bundle.get("display_name", "Global") if bundle["temperature"].get("grid_spacing_degrees") \
+    national_name = "Global" if bundle["temperature"].get("grid_spacing_degrees") \
         else f"All areas ({country_names[0]})" if country_names else nid.replace("_", " ")
     out = [{"id": nid, "name": national_name, "scope": "national",
             "lat": global_lat, "lon": global_lon, "cells": len(cells)}]

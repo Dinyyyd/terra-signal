@@ -1,15 +1,16 @@
 # SAT-SCOPE — Earth System Trend Detective
 
-**Hackathon profile:** the default archive now loads only the five pilot countries
-(Sri Lanka, US, UK, Australia, India). This is a historical prototype, not real-time
-monitoring. Sri Lanka has no sample in the existing coarse archive and is shown
-as unavailable. The archive's soil-wetness indicator is not MODIS NDVI.
-See [scope and vegetation plan](docs/HACKATHON_SCOPE.md). The global-archive
-description below documents the retained source archive; it is no longer the default.
+**Vegetation contribution:** select Australia, then Canberra (MODIS study area)
+in the existing location controls. This study area uses MOD13Q1 NDVI, a 2020-2024
+seasonal baseline and 2025 observations. Other locations retain the original
+archive; soil wetness is not NDVI. The original global archive remains the default.
+Canberra has no aligned temperature/rain/fire data and is excluded from compound
+analysis. Set `SATSCOPE_NDVI_REVIEW_PACKAGE` to the validated v2 ZIP for local use.
+No package means unavailable data, never fabricated observations.
 
-The working checkout targets `Dinyyyd/terra-signal`. The earlier local checkout,
-download lists and validation ZIPs are preserved in `_local_archive/` and ignored
-by Git. Do not upload that folder or add it with `git add -f`.
+The working checkout targets `Dinyyyd/terra-signal`. Obsolete checkout backups
+have been removed. Downloaded NDVI files, validation ZIPs and research notes are
+preserved in `data/local_ndvi_research/` and ignored by Git. Do not force-add them.
 The NDVI candidate is an offline review feature, not a completed production
 integration; see [proposal review](docs/NDVI_PROPOSAL_REVIEW.md).
 

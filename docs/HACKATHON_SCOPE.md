@@ -1,34 +1,16 @@
-# Two-day hackathon scope
+# Agreed vegetation scope
 
-This is an initial historical-data prototype, not a real-time satellite service.
-The default archive is restricted to Sri Lanka, United States of America,
-United Kingdom, Australia and India. Original source values and baseline years
-are preserved. Rebuild with `python backend/scripts/build_hackathon_subset.py`.
-The full archive is retained for reproducibility; it is not loaded by default.
+Canberra, Australia is sufficient for this contribution. MOD13Q1 NDVI uses
+2020-2024 seasonal baselines and 2025 evaluation observations.
 
-The coarse source grid has no Sri Lanka sample. Sri Lanka remains selectable
-with unavailable data; neither interpolation nor mock observations fill this gap.
-Country selections summarize available sample cells, not complete national coverage.
+The original team country catalog (177 countries) and global archive (615 cells)
+remain unchanged. The earlier five-country restriction and its builder have been
+removed. Other contributors' algorithms, source data and archive calculations
+are unchanged relative to upstream/main.
 
-## Vegetation component
+The location API adds one distinct Canberra MODIS study-area entry under Australia.
+It does not add countries or relabel existing archive cells. Only that selection
+loads the NDVI component. No aligned observations are fabricated for the other
+indicators, and the candidate remains excluded from compound analysis.
 
-The existing dashboard archive contains NASA POWER root-zone soil wetness.
-It is NOT MODIS NDVI. Do not present it as the vegetation proposal implementation.
-The separately developed Canberra MOD13Q1 candidate remains offline and has not
-been deployed into this repository. Its historical percentage change is not yet
-independently validated.
-
-For a small NDVI demonstration, use one explicitly named study polygon in each
-requested country, three corresponding seasonal composites per year for
-2020–2024, and the same three periods in 2025. This is a proposed acquisition
-plan, not existing five-country NDVI coverage. Keep NDVI, pixel reliability,
-VI Quality and composite acquisition day for each observation. Preserve actual
-acquisition years at year boundaries. Process with the same matched-pixel code;
-do not train a new model or pool baselines across countries. Label results as
-study-area pilots, not national estimates. Australia can reuse Canberra.
-
-Stop expanding the HLS validation download for the hackathon. Retain the existing
-date-matched diagnostics and state their coverage and limits. Avoid claims of
-validated ecological decline, prediction accuracy or real-time operation.
-Production deployment remains on hold. A local prototype is suitable for
-explaining the method and showing clearly labelled historical observations.
+No commit, push, merge or deployment is authorized at this stage.

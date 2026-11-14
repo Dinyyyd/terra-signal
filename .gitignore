@@ -12,4 +12,4 @@ data/*.db
 .env
 .DS_Store
 
-_local_archive/
+data/local_ndvi_research/

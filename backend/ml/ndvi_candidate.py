@@ -18,7 +18,7 @@ try:
 except ImportError:  # Colab uploads both modules into the same directory.
     from ndvi_pipeline import discover_rasters, _read_observation
 
-VERSION = "matched-pixel-candidate-1"
+VERSION = "matched-pixel-candidate-2"
 
 
 def file_hash(path):
@@ -47,12 +47,22 @@ def compare(current, history, area, minimum_years=4, minimum_coverage=80.0,
     Coverage 80% is a configurable pilot reporting rule, not a calibrated threshold.
     Low-coverage numerical summaries are diagnostic only; reportable values are null.
     """
-    if minimum_years < 3 or not 0 <= minimum_coverage <= 100 or minimum_baseline <= 0:
+    if (isinstance(minimum_years, bool) or not isinstance(minimum_years, (int, np.integer))
+            or minimum_years < 3 or not np.isfinite(minimum_coverage)
+            or not 0 <= minimum_coverage <= 100 or not np.isfinite(minimum_baseline)
+            or not 0 < minimum_baseline <= 1):
         raise ValueError("Invalid comparison parameters")
+    current, area = np.asarray(current), np.asarray(area)
+    history = [np.asarray(h) for h in history]
+    if area.dtype != bool or current.ndim != 2:
+        raise ValueError("Expected a Boolean study mask and two-dimensional NDVI arrays")
     if not area.any() or current.shape != area.shape:
         raise ValueError("Empty or mismatched study mask")
     if any(h.shape != current.shape for h in history):
         raise ValueError("Mismatched historical grid")
+    for values in [current, *history]:
+        if np.isinf(values).any() or np.any(np.isfinite(values) & ((values < -0.2) | (values > 1))):
+            raise ValueError("Expected scaled NDVI in [-0.2, 1], with NaN for missing pixels")
     stack = np.stack(history) if len(history) else np.empty((0, *current.shape))
     counts = np.isfinite(stack).sum(axis=0)
     supported = area & (counts >= minimum_years)
@@ -161,7 +171,8 @@ def run_candidate(raw_dir, output_dir, geometry_path, baseline_start=2020,
         metrics, base, mask, counts = compare(observations[date], historical, area,
                                             minimum_years, minimum_coverage, minimum_baseline)
         end = min(date + pd.Timedelta(days=15), pd.Timestamp(date.year, 12, 31))
-        rows.append({"date": str(date.date()), "composite_end": str(end.date()),
+        rows.append({"date": str(date.date()), "nominal_calendar_end": str(end.date()),
+                     "date_semantics": "Composite label, not pixel acquisition bounds",
                      "seasonal_period": period, **metrics})
         maps[date] = (base, mask, counts)
         for support in range(3, baseline_end - baseline_start + 2):

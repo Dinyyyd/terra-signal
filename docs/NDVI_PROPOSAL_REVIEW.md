@@ -1,40 +1,31 @@
-# Vegetation proposal review and integration status
+# Vegetation proposal and implementation
 
-Source: SAT_SCOPE_Earth_System_Trend_Detective_Proposal.pdf in this repository.
+Source: SAT_SCOPE_Earth_System_Trend_Detective_Proposal.pdf in the repository.
+Pages 1-2 describe MODIS NDVI and percentage change from a historical baseline.
+Page 2 describes an individual vegetation endpoint and eventual compound features.
+Page 3 supports prefetched, processed data for a 48-hour hackathon. The proposal
+does not prescribe these baseline years, five countries or heavy model training.
+The team has accepted Canberra as the vegetation pilot.
 
-Pages 1–2 specify MODIS NDVI and percentage change from a baseline. Page 2
-specifies an individual vegetation endpoint and an eventual compound feature
-vector containing NDVI percentage change. Page 3 explicitly supports prefetched,
-processed observations and cached local presentation for a 48-hour hackathon.
-Heavy training, real-time downloads, five countries and particular baseline years
-are not requirements in the PDF. The five-country scope is a later team decision.
+## Implementation
 
-## Implemented foundation
+- `backend/ml/ndvi_pipeline.py`: raster discovery, scaling and QA; also retains
+  the earlier regional-median implementation for reproducibility.
+- `backend/ml/ndvi_candidate.py`: matched-pixel seasonal baseline and changes.
+- `notebooks/SAT_SCOPE_NDVI_Candidate_Validation.ipynb`: Colab workflow using
+  those same Python modules.
+- `backend/services/ndvi_package.py`: complete v2 export validation.
+- `backend/routers/ndvi.py`: authenticated summary, time-series, GeoJSON and
+  combined review endpoints. Disabled unless a review package is configured.
+- `frontend/src/components/NdviReview.jsx` and `.css`: Canberra presentation in
+  the existing Australia/area selection workflow.
+- `backend/ml/ndvi_dates.py`: limited December acquisition-day decoder for
+  cross-sensor review, not a full-history acquisition-date correction.
 
-- `ml/ndvi_pipeline.py` provides the shared raster reader with scaling and QA.
-- `ml/ndvi_candidate.py` computes seasonal matched-pixel medians and descriptive
-  changes, requiring sufficient historical support and coverage.
-- The candidate Colab notebook uses these same modules.
-- `ml/ndvi_dates.py` decodes the December 2025 acquisition-day rollover for
-  cross-sensor review. It is deliberately not a general all-year decoder.
-- An authenticated `/api/ndvi/canberra` review endpoint is disabled by default.
-  To review locally, set SATSCOPE_NDVI_REVIEW_DIR to a trusted candidate export
-  folder containing candidate_latest.json. It does not feed compound analysis.
-  Non-reportable values remain null. Existing soil-wetness routes are unchanged.
+The original global country catalog and teammates' analytics remain in place.
+Canberra NDVI is distinct from the archive's soil-wetness indicator. Unavailable
+Canberra indicators are shown as unavailable; NDVI is not joined to unrelated
+country samples or used in compound analysis.
 
-## Remaining integration work
-
-1. Validate export identity, geometry, finite numeric values, provenance and full
-   schema before enabling a production adapter; current endpoint is local review.
-2. Connect a labelled NDVI time-series/map panel and the proposal's vegetation
-   API contract without replacing soil wetness or fabricating matching grid IDs.
-3. Surface composite-period labels separately from actual acquisition ranges.
-   Historical candidate exports lack full-record acquisition-day data. Do not
-   claim strict calendar-year splits or complete year-boundary correction.
-4. Import and verify the existing Canberra candidate as observed pilot data;
-   acquire small matched seasonal datasets for other country study areas.
-5. Run full frontend and API integration checks before push of a completed feature.
-
-Deployment is not approved. Descriptive NDVI differences are not independently
-validated vegetation damage. The existing candidate's 80% coverage rule is a
-provisional reporting policy, not a calibrated accuracy criterion.
+See [validation record](NDVI_AUDIT.md) for scientific limitations and
+[local workflow](NDVI_NEXT_STEPS.md) for verification and review commands.
