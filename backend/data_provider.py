@@ -304,6 +304,7 @@ class GlobalPowerArchiveProvider(DataProvider):
                 "previous_period_detections": 0, "detections": [],
                 "baseline_period": "No historical fire data in NASA POWER",
             },
+            "display_name": archive.get("display_name", "Global"),
             "countries": archive.get("countries", []),
             "areas": archive.get("areas", []),
         }

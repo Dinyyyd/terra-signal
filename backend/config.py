@@ -6,7 +6,8 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 MOCK_DIR = DATA_DIR / "mock"
 GRID_FILE = DATA_DIR / "region_grid.json"
-GLOBAL_HISTORY_FILE = DATA_DIR / "history" / "nasa_power_global_monthly_2011_2025.json"
+GLOBAL_HISTORY_FILE = Path(os.getenv(
+    "SATSCOPE_HISTORY_FILE", DATA_DIR / "history" / "hackathon_five_countries.json"))
 DB_PATH = Path(os.getenv("SATSCOPE_DB", DATA_DIR / "sat_scope.sqlite"))
 
 # "mock"  -> read the four JSON files in data/mock/

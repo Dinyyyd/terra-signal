@@ -1,5 +1,18 @@
 # SAT-SCOPE — Earth System Trend Detective
 
+**Hackathon profile:** the default archive now loads only the five pilot countries
+(Sri Lanka, US, UK, Australia, India). This is a historical prototype, not real-time
+monitoring. Sri Lanka has no sample in the existing coarse archive and is shown
+as unavailable. The archive's soil-wetness indicator is not MODIS NDVI.
+See [scope and vegetation plan](docs/HACKATHON_SCOPE.md). The global-archive
+description below documents the retained source archive; it is no longer the default.
+
+The working checkout targets `Dinyyyd/terra-signal`. The earlier local checkout,
+download lists and validation ZIPs are preserved in `_local_archive/` and ignored
+by Git. Do not upload that folder or add it with `git add -f`.
+The NDVI candidate is an offline review feature, not a completed production
+integration; see [proposal review](docs/NDVI_PROPOSAL_REVIEW.md).
+
 NASA Space Apps Challenge · *Be An Earth System Trend Detective!*
 © TerraSignal
 

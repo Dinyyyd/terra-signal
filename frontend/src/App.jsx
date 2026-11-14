@@ -213,11 +213,11 @@ export default function App() {
       <div className="content">
         {user.is_default_password && <div className="warn-banner"><AlertTriangle size={16} /><span>You are using the default password. Change it now to secure this dashboard.</span><button onClick={() => setTab('settings')}>Change password</button></div>}
         <div className="page-heading">
-          <div><div className="eyebrow">NASA SPACE APPS CHALLENGE <span className="heading-dot">/</span> BE AN EARTH SYSTEM TREND DETECTIVE</div><h1>Earth system <span>intelligence</span></h1><p>{data?.source_mode === 'ARCHIVE' ? 'Explore global NASA climate reanalysis and compare environmental trends with seasonal baselines.' : 'Discover environmental patterns, connect satellite observations and investigate emerging anomalies.'}</p></div>
+          <div><div className="eyebrow">NASA SPACE APPS CHALLENGE <span className="heading-dot">/</span> BE AN EARTH SYSTEM TREND DETECTIVE</div><h1>Earth system <span>intelligence</span></h1><p>{data?.source_mode === 'ARCHIVE' ? 'Historical hackathon prototype: sampled pilot areas and seasonal baselines. Not real-time monitoring.' : 'Discover environmental patterns, connect satellite observations and investigate emerging anomalies.'}</p></div>
           <div className="heading-actions">
             {locations.length > 0 && <>
               <select className="scope-select" value={countryFilter} onChange={e => changeCountry(e.target.value)} aria-label="Country filter">
-                <option value="global">Global</option>
+                <option value="global">{locations.find(item => item.scope === "national")?.name || "All available areas"}</option>
                 {countryLocations.map(country => <option key={country.id} value={country.id}>
                   {country.name}{country.cells === 0 ? ' · no data' : ''}
                 </option>)}
@@ -280,7 +280,7 @@ export default function App() {
 
         {tab === 'settings' && <Settings user={user} onUserChange={setUser} dataSource={dataSource} onReload={reload} reloading={loading} />}
 
-        {tab !== 'settings' && (loading && !data ? <div className="loading-panel"><div className="loader" /><b>Connecting to Earth observation datasets</b><span>Preparing environmental intelligence…</span></div> : selectedLocation?.cells === 0 ? <div className="loading-panel no-data-panel"><MapPin size={22} /><b>Selected area data not available</b><span>NASA archive has no grid data for {selectedLocation.name}. Choose another area or select Global.</span></div> : data && <>
+        {tab !== 'settings' && (loading && !data ? <div className="loading-panel"><div className="loader" /><b>Connecting to Earth observation datasets</b><span>Preparing environmental intelligence…</span></div> : selectedLocation?.cells === 0 ? <div className="loading-panel no-data-panel"><MapPin size={22} /><b>Selected area data not available</b><span>NASA archive has no grid data for {selectedLocation.name}. Choose another area or select the combined overview.</span></div> : data && <>
           <div className="overview-strip">
             <div className="location-block"><div className="location-icon"><MapPin size={18} /></div><div><small>SELECTED AREA</small><b>{data.location_name}</b><span>{fmt(Math.abs(data.center.lat), 4)}° {data.center.lat >= 0 ? 'N' : 'S'}&nbsp; {fmt(Math.abs(data.center.lon), 4)}° {data.center.lon >= 0 ? 'E' : 'W'}</span></div></div>
             <div className="strip-divider" />
@@ -292,7 +292,7 @@ export default function App() {
           </div>
 
           {tab === 'overview' && <>
-            <div className="section-heading"><div><span className="eyebrow">INDICATOR SNAPSHOT</span><h2>Environmental indicators</h2></div><span className="section-meta">{data.sources.filter(s => s.source_mode !== 'UNAVAILABLE').length} data streams <span className="meta-dot" /> {data.cells.length}{data.grid_spacing_degrees ? ` global ${data.grid_spacing_degrees}° grid cells` : ' grid cells'}</span></div>
+            <div className="section-heading"><div><span className="eyebrow">INDICATOR SNAPSHOT</span><h2>Environmental indicators</h2></div><span className="section-meta">{data.sources.filter(s => s.source_mode !== 'UNAVAILABLE').length} data streams <span className="meta-dot" /> {data.cells.length}{data.grid_spacing_degrees ? ` ${data.grid_spacing_degrees}° grid cells` : ' grid cells'}</span></div>
             <div className="stats-grid">
               <StatCard icon={Thermometer} label={data.temperature.label} value={fmt(data.temperature.current)} unit={data.temperature.unit} delta={`${data.temperature.z_score >= 0 ? '+' : ''}${fmt(data.temperature.z_score, 2)}σ vs baseline`} status={data.temperature.status} hint={`(Z-score deviation; baseline: ${fmt(data.temperature.baseline)} ${data.temperature.unit})`} accent="orange" />
               <StatCard icon={Leaf} label={data.vegetation.label} value={fmt(data.vegetation.ndvi, 2)} unit={data.vegetation.unit === 'fraction' ? '' : data.vegetation.unit} delta={`${fmt(data.vegetation.change_percent)}% vs baseline`} status={data.vegetation.status} hint={`(same-month baseline: ${fmt(data.vegetation.baseline, 2)} ${data.vegetation.unit})`} accent="green" />
