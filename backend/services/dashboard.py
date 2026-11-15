@@ -15,6 +15,7 @@ from ml import stats
 from ml.fire_clusters import cluster_fires
 from ml.geo import haversine_matrix
 from ml.isolation import score_cells
+from ml.historical import apply_models
 from services import cache
 
 _SECTOR = re.compile(r"\s+Sector\s+\d+$", re.I)
@@ -84,6 +85,10 @@ def _context(bundle: dict[str, Any]) -> dict[str, Any]:
         feature_labels = None
     outlier, score, drivers = score_cells(matrix, feature_labels)
 
+    model_methods = ['spatial snapshot (not historical model)'] * len(ids)
+    if bundle['temperature'].get('source_mode') == 'ARCHIVE' and matrix.shape[1] == 3:
+        model_methods = apply_models(matrix, [t[i].get('country') for i in ids], outlier, score, drivers)
+
     cells = []
     for k, cid in enumerate(ids):
         country = t[cid].get("country")
@@ -110,7 +115,7 @@ def _context(bundle: dict[str, Any]) -> dict[str, Any]:
                               "percentile": p[cid]["percentile"], "z_score": round(float(z_rain[k]), 2)},
             "fires_nearby": int(local[k]),
             "is_outlier": bool(outlier[k]), "anomaly_score": round(float(score[k]), 3),
-            "drivers": drivers[k],
+            "drivers": drivers[k], "model_method": model_methods[k],
         })
     fire_rows = []
     for k, f in enumerate(fires):
@@ -279,7 +284,7 @@ def _build(location: str) -> dict[str, Any]:
 
     parts = []
     temperature_label = "Temperature"
-    vegetation_label = "Vegetation"
+    vegetation_label = "Root-zone soil wetness" if soil_wetness else "Vegetation"
     if abs(t_z) >= 1:
         parts.append(f"{temperature_label} is {abs(t_z):.1f} standard deviations {'above' if t_z > 0 else 'below'} baseline")
     vegetation_watch = config.SOIL_WATCH_PCT if soil_wetness else config.NDVI_WATCH_PCT
@@ -315,7 +320,7 @@ def _build(location: str) -> dict[str, Any]:
         key=lambda h: (-h["outlier_cells"], -h["score"]))[:8]
 
     sources = []
-    for kind, label in (("temperature", "Temperature"), ("vegetation", "Vegetation"),
+    for kind, label in (("temperature", "Temperature"), ("vegetation", vegetation_label),
                         ("precipitation", "Precipitation"), ("fires", "Fire detection")):
         ds = bundle[kind]
         sources.append({"indicator": label, "dataset": ds.get("dataset", kind), "source_mode": ds.get("source_mode", "UNKNOWN"),
@@ -326,7 +331,7 @@ def _build(location: str) -> dict[str, Any]:
     if "ARCHIVE" in modes and modes <= {"ARCHIVE", "UNAVAILABLE"}:
         source_mode = "ARCHIVE"
     else:
-        source_mode = "LIVE" if modes == {"LIVE"} else "MOCK" if "LIVE" not in modes else "MIXED"
+        raise DataError("Unsupported archive source mode")
 
     dates = [r["date"] for r in bundle["temperature"].get("timeseries", [])] or \
             [r.get("date") for r in bundle["temperature"]["observations"] if r.get("date")]
@@ -352,19 +357,19 @@ def _build(location: str) -> dict[str, Any]:
                         "timeseries": temperature_timeseries},
         "vegetation": {"ndvi": round(n_cur, 3), "baseline": round(n_base, 3), "change_percent": round(n_chg, 1),
                        "status": st["v"], "unit": bundle["vegetation"].get("unit", "NDVI"),
-                       "label": "Vegetation",
+                       "label": vegetation_label,
                        "timeseries": vegetation_timeseries},
         "precipitation": {"current_mm": round(r_cur, 1), "baseline_mm": round(r_base, 1), "percentile": round(r_pct, 1),
                           "status": st["r"], "unit": bundle["precipitation"].get("unit", "mm/day"),
                           "label": "Precipitation",
                           "timeseries": precipitation_timeseries},
-        "fire": {"detections": len(fires), "previous_period_detections": prev, "clusters": len(labels),
+        "fire": {"detections": len(fires) if fire_available else None, "previous_period_detections": prev if fire_available else None, "clusters": len(labels) if fire_available else None,
                  "change_percent": round(f_chg, 1) if fire_available else None,
                  "change_scope": "national", "status": st["f"],
                  "available": fire_available, "detections_detail": fires},
         "timeseries_scope": "location" if bundle["temperature"].get("grid_spacing_degrees") else "national",
         "grid_spacing_degrees": bundle["temperature"].get("grid_spacing_degrees"),
-        "cells": cells, "hotspots": hotspots, "explanation": explanation,
+        "model_methods": sorted({c["model_method"] for c in cells}), "cells": cells, "hotspots": hotspots, "explanation": explanation,
         "methodology": {
             "temperature": f"Z = (x − μ) / σ; |Z| ≥ {config.Z_EXTREME:g} extreme, {config.Z_MODERATE:g}–{config.Z_EXTREME:g} moderate.",
             "vegetation": (f"Root-zone soil wetness fraction; decreases ≤ {config.SOIL_DRYING_PCT:g}% are drying and "
@@ -379,24 +384,24 @@ def _build(location: str) -> dict[str, Any]:
                          "historical fire data are unavailable and excluded." if not fire_available else
                          "Isolation Forest over standardised V = [Z_temp, Δ%NDVI, Z_rain, Δ%Fire_local] per grid cell; ")
                         +
-                        f"top {config.IFOREST_CONTAMINATION:.0%} most isolated cells are flagged. A compound anomaly needs ≥ 2 indicator flags.",
+                        f"Historical country models use a {config.IFOREST_CONTAMINATION:.0%} training contamination setting; other areas use snapshot fitting. A compound anomaly needs ≥ 2 indicator flags.",
         },
     }
 
 
 def get_dashboard(location: str) -> dict[str, Any]:
-    """Fresh payload when possible; otherwise the last cached payload (fail-safe demo mode)."""
+    """Fresh payload when possible; otherwise the last cached payload (historical cache)."""
     try:
         payload = _build(location)
     except LocationNotFound:
         raise
     except Exception as exc:  # noqa: BLE001
         cached = cache.load(slug(location))
-        if cached is None:
+        if cached is None or cached["payload"].get("source_mode") != "ARCHIVE":
             raise
         payload = cached["payload"]
         payload["served_from_cache"] = True
-        payload["cache_warning"] = f"Live data unavailable ({type(exc).__name__}); showing cached data from {cached['updated_at']}."
+        payload["cache_warning"] = f"Historical archive unavailable ({type(exc).__name__}); showing cached data from {cached['updated_at']}."
         return payload
     cache.save(payload["location"], payload)
     return payload

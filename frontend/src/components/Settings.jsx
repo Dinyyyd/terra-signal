@@ -43,7 +43,7 @@ export default function Settings({ user, onUserChange, dataSource, onReload, rel
       <div className="settings-head"><Database size={18} /><div><h3>Data source</h3><small>Configured with <code>DATA_SOURCE</code> · adapter file <code>backend/data_provider.py</code></small></div>
         <button className="refresh-btn" onClick={onReload} disabled={reloading}><RefreshCw size={15} className={reloading ? 'spin' : ''} /> Reload data</button></div>
       {dataSource && <>
-        <p className="muted">Configured: <b>{dataSource.configured}</b> · Effective mode: <b>{dataSource.effective_mode}</b>{dataSource.configured === 'live' && !dataSource.firms_key_configured && <> · <span className="warn-text">NASA_FIRMS_MAP_KEY not set</span></>}</p>
+        <p className="muted">Configured: <b>{dataSource.configured}</b> · Effective mode: <b>{dataSource.effective_mode}</b></p>
         <div className="table-wrap"><table className="data-table"><thead><tr><th>Indicator</th><th>Dataset</th><th>Mode</th><th>Records</th><th>Baseline</th></tr></thead><tbody>
           {dataSource.sources.map(s => <tr key={s.indicator}><td>{s.indicator}</td><td>{s.dataset}</td>
             <td><span className={`mode-pill ${s.source_mode === 'UNAVAILABLE' ? 'unavailable' : s.source_mode.startsWith('LIVE') || s.source_mode === 'ARCHIVE' ? 'live' : 'mock'}`}>{s.source_mode}</span>{s.fallback_reason && <small className="muted block">{s.fallback_reason}</small>}</td>

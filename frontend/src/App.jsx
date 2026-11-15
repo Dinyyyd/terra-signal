@@ -195,7 +195,7 @@ export default function App() {
         <span className={`source-dot ${sourceColors[index % sourceColors.length]}`} />{source.indicator}
       </div>)}
       <div className="sidebar-bottom">
-        <div className="data-mode"><Database size={16} /><div><b>{data ? (data.source_mode === 'ARCHIVE' ? 'NASA historical archive' : data.source_mode === 'LIVE' ? 'Live NASA data' : data.source_mode === 'MIXED' ? 'Mixed live / mock' : 'Local demo mode') : 'Connecting…'}</b><small>{data ? `${data.sources.filter(s => s.source_mode !== 'UNAVAILABLE').length} available datasets` : ''}</small></div><span className="mode-dot" /></div>
+        <div className="data-mode"><Database size={16} /><div><b>{data ? (data.source_mode === 'ARCHIVE' ? 'NASA historical archive' : data.source_mode === 'LIVE' ? 'Live NASA data' : 'Data unavailable') : 'Connecting…'}</b><small>{data ? `${data.sources.filter(s => s.source_mode !== 'UNAVAILABLE').length} available datasets` : ''}</small></div><span className="mode-dot" /></div>
         <div className="profile"><div className="avatar">{initials(user.display_name)}</div><div><b>{user.display_name}</b><small>@{user.username}</small></div><button className="icon-btn" onClick={logout} title="Sign out"><LogOut size={15} /></button></div>
       </div>
     </aside>
@@ -349,14 +349,14 @@ export default function App() {
             </tbody></table></div></section>
           </>}
 
-          {tab === 'methodology' && <section className="method-panel"><div className="section-heading"><div><span className="eyebrow">TRANSPARENT ANALYTICS</span><h2>Detection methodology</h2></div></div>
+          {tab === 'methodology' && <section className="method-panel"><div className="section-heading"><div><span className="eyebrow">TRANSPARENT ANALYTICS</span><h2>Detection methodology</h2>{data.model_methods?.map(method => <p key={method}>{method}</p>)}</div></div>
             <div className="method-list">
-              {[['01', 'Temperature · Z-Score', 'Z = (x − μ) / σ', data.methodology.temperature], ['02', data.vegetation.unit === 'fraction' ? 'Vegetation · Soil Wetness Delta' : 'Vegetation · NDVI Delta', data.vegetation.unit === 'fraction' ? 'MERRA-2 root-zone soil wetness fraction' : 'NDVI = (NIR − Red) / (NIR + Red)', data.methodology.vegetation],
+              {[['01', 'Temperature · Z-Score', 'Z = (x − μ) / σ', data.methodology.temperature], ['02', data.vegetation.unit === 'fraction' ? 'Root-zone Soil Wetness Delta' : 'Vegetation · NDVI Delta', data.vegetation.unit === 'fraction' ? 'MERRA-2 root-zone soil wetness fraction' : 'NDVI = (NIR − Red) / (NIR + Red)', data.methodology.vegetation],
                 ['03', 'Precipitation · Quantiles', 'Historical distribution quantiles (percentile rank)', data.methodology.precipitation], ['04', 'Fire detection · DBSCAN', 'Density-based spatial clustering', data.methodology.fire],
                 ['05', 'Compound anomaly · Isolation Forest', fireAvailable ? 'V = [Z_temp, Δ%vegetation, Z_rain, Δ%Fire]' : 'V = [Z_temp, Δ%soil wetness, Z_precipitation]', data.methodology.compound]
               ].map(m => <div className="method-row" key={m[0]}><span className="method-number">{m[0]}</span><div><h3>{m[1]}</h3><code>{m[2]}</code><p>{m[3]}</p></div></div>)}
             </div>
-            <div className="method-note"><ShieldCheck size={17} /><span>{data.source_mode === 'ARCHIVE' ? 'Historical NASA POWER data are bundled locally. Meteorological variables come from MERRA-2 reanalysis, not direct satellite observations; fire history is unavailable.' : data.source_mode === 'LIVE' ? 'Values come from the configured live NASA sources; see Settings → Data source for products and retrieval times.' : 'This build is running on simulated demonstration data, not NASA observations. Do not use it for operational decisions.'}</span></div>
+            <div className="method-note"><ShieldCheck size={17} /><span>{data.source_mode === 'ARCHIVE' ? 'Historical NASA POWER data are bundled locally. Meteorological variables come from MERRA-2 reanalysis, not direct satellite observations; fire history is unavailable.' : data.source_mode === 'LIVE' ? 'Values come from the configured live NASA sources; see Settings → Data source for products and retrieval times.' : 'Historical data unavailable.'}</span></div>
           </section>}
         </>)}
 

@@ -15,19 +15,15 @@ TMP = Path(__file__).parent / "_tmp"
 
 @pytest.fixture()
 def client(tmp_path, monkeypatch):
-    mock = tmp_path / "mock"
-    shutil.copytree(config.MOCK_DIR, mock)
     monkeypatch.setattr(config, "DB_PATH", tmp_path / "t.sqlite")
-    monkeypatch.setattr(config, "MOCK_DIR", mock)
     import data_provider
     from services import dashboard, security
-    monkeypatch.setattr(data_provider, "_instance", data_provider.MockJsonProvider(mock))
+    monkeypatch.setattr(data_provider, "_instance", data_provider.GlobalPowerArchiveProvider())
     dashboard.reset_memo()
     security._failures.clear()
     from fastapi.testclient import TestClient
     from main import app
     with TestClient(app) as c:
-        c.mock_dir = mock
         yield c
 
 
@@ -41,7 +37,7 @@ def auth(c):
 
 
 def test_default_login_and_protection(client):
-    assert client.get("/api/dashboard/Sri_Lanka").status_code == 401
+    assert client.get("/api/dashboard/country_Sri_Lanka").status_code == 401
     r = login(client)
     assert r.status_code == 200 and r.json()["user"]["is_default_password"] is True
     assert login(client, "wrong").status_code == 401
@@ -54,26 +50,23 @@ def test_api_description_omits_personal_author_credit(client):
 
 
 def test_dashboard_shape(client):
-    d = client.get("/api/dashboard/Sri_Lanka", headers=auth(client)).json()
-    assert d["source_mode"] == "MOCK" and len(d["cells"]) == 100 and d["fire"]["clusters"] > 0
-    assert [d[k]["label"] for k in ("temperature", "vegetation", "precipitation")] == [
-        "Temperature", "Vegetation", "Precipitation"
-    ]
-    assert [s["indicator"] for s in d["sources"]] == [
-        "Temperature", "Vegetation", "Precipitation", "Fire detection"
-    ]
-    assert "quantile" in d["methodology"]["precipitation"].lower()
-    for k in ("temperature", "vegetation", "precipitation", "fire", "overall_anomaly", "explanation", "hotspots"):
-        assert k in d
-    for p in ("temperature", "vegetation", "precipitation", "fire"):
-        assert client.get(f"/api/{p}/Sri_Lanka", headers=auth(client)).status_code == 200
+    h = auth(client)
+    for country in ("country_Australia", "country_India", "country_United_Kingdom", "country_United_States_of_America"):
+        r = client.get(f"/api/dashboard/{country}", headers=h)
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert d["source_mode"] == "ARCHIVE"
+        assert d["fire"]["available"] is False and d["fire"]["detections"] is None
+        assert d["vegetation"]["label"] == "Root-zone soil wetness"
+        assert any("historical country" in m for m in d["model_methods"])
+    for indicator in ("temperature", "vegetation", "precipitation", "fire"):
+        assert client.get(f"/api/{indicator}/country_Australia", headers=h).status_code == 200
 
 
 def test_region_and_unknown(client):
     h = auth(client)
     assert len(client.get("/api/locations", headers=h).json()) > 10
-    r = client.get("/api/dashboard/Jaffna", headers=h).json()
-    assert r["scope"] == "region" and len(r["cells"]) == 2
+    assert client.get("/api/dashboard/country_Sri_Lanka", headers=h).status_code == 404
     assert client.get("/api/dashboard/Atlantis", headers=h).status_code == 404
 
 
@@ -131,28 +124,19 @@ def test_lockout(client):
     assert login(client, "password").status_code == 429
 
 
-def test_data_swap_is_picked_up(client):
-    """Editing the data files (e.g. real NASA export) changes the dashboard with no code change."""
-    h = auth(client)
-    before = client.get("/api/dashboard/Sri_Lanka", headers=h).json()["temperature"]["current"]
-    f = client.mock_dir / "temperature.json"
-    d = json.loads(f.read_text())
-    for r in d["observations"]:
-        r["current"] += 5
-    d["source_mode"] = "LIVE"
-    f.write_text(json.dumps(d))
-    os.utime(f, None)
-    after = client.get("/api/dashboard/Sri_Lanka", headers=h).json()
-    assert round(after["temperature"]["current"] - before, 1) == 5.0
-    assert after["source_mode"] == "MIXED"
+def test_archive_only():
+    from data_provider import PROVIDERS
+    assert set(PROVIDERS) == {"archive"}
 
 
-def test_bad_data_gives_clear_error_and_cache_fallback(client):
+def test_bad_data_gives_clear_error_and_cache_fallback(client, monkeypatch):
+    from services import dashboard
+    from data_provider import DataError
     h = auth(client)
-    assert client.get("/api/dashboard/Sri_Lanka", headers=h).status_code == 200   # primes the cache
-    f = client.mock_dir / "fires.json"
-    f.write_text("{not json")
-    os.utime(f, None)
-    r = client.get("/api/dashboard/Sri_Lanka", headers=h)
+    assert client.get("/api/dashboard/country_Australia", headers=h).status_code == 200
+    def fail(location):
+        raise DataError("Archive unavailable")
+    monkeypatch.setattr(dashboard, "_build", fail)
+    r = client.get("/api/dashboard/country_Australia", headers=h)
     assert r.status_code == 200 and r.json()["served_from_cache"] is True
-    assert client.get("/api/dashboard/Jaffna", headers=h).status_code == 503      # nothing cached for it
+    assert client.get("/api/dashboard/country_India", headers=h).status_code == 503

@@ -3,7 +3,7 @@
 NASA Space Apps Challenge · *Be An Earth System Trend Detective!*
 © TerraSignal
 
-React + Leaflet + Plotly dashboard, FastAPI backend, scikit-learn analytics (temperature Z-scores, vegetation deltas, precipitation quantiles, fire-detection DBSCAN, Isolation Forest) and SQLite. No Docker.
+React + Leaflet + Plotly dashboard, FastAPI backend, scikit-learn analytics (temperature Z-scores, soil-wetness deltas, precipitation quantiles, Isolation Forest) and SQLite. No Docker.
 
 ## Login
 | Username | Password (default) |
@@ -36,19 +36,8 @@ python scripts/download_nasa_power_history.py
 The downloader is resumable and stores a temporary checkpoint under `data/history/` until it completes. It does not need NASA credentials. NASA POWER reports these meteorological variables as MERRA-2 reanalysis, **not direct satellite observations**. The grid consists of point samples at 5-degree spacing, not area-averages; Natural Earth land, country and 1:10m administrative boundaries select land cells and provide area names. The coarse grid will not cover every district or city. Historical fire detections are not included and are shown as unavailable rather than zero.
 Root-zone wetness status thresholds are simple dashboard heuristics against the same-month baseline, not NASA-issued drought classifications.
 
-## Data providers
-Everything reads data through **`backend/data_provider.py`**.
-
-| Option | How |
-|---|---|
-| Global historical archive (default) | `DATA_SOURCE=archive uvicorn main:app` |
-| Replace the 4 demo JSON files | Overwrite `data/mock/*.json` using the schema documented at the top of `data_provider.py`, then set `DATA_SOURCE=mock`. |
-| Use the built-in live adapters | `DATA_SOURCE=live NASA_FIRMS_MAP_KEY=<key> uvicorn main:app` |
-| Your own pipeline | Subclass `DataProvider`, return the 4 datasets, register it in `PROVIDERS`. |
-
-The optional live adapters use **FIRMS** VIIRS fires (key needed) and **NASA POWER** daily temperature and precipitation; MODIS NDVI remains a plug-in hook. In live mode, an indicator that fails falls back to the Sri Lanka mock file and is labelled *MOCK (fallback)* in Settings → Data source. Data is validated, so malformed files produce a clear error. If a source fails entirely, the last good result is served from the SQLite cache.
-
-> POWER `TS` in live mode is reanalysis skin temperature, not MODIS LST. The bundled monthly archive instead uses `T2M` (2 m air temperature).
+## Data provider
+This submission uses only the bundled NASA POWER historical archive. No simulated observations or live fallback are included. Missing observations are unavailable; only previously cached archive results may be served on a read failure.
 
 ## What the app does
 - Login, session tokens, password change, lockout after 5 failed attempts
@@ -64,6 +53,12 @@ The optional live adapters use **FIRMS** VIIRS fires (key needed) and **NASA POW
 ## Notes
 - The default archive covers land grid centers with complete values for all three NASA POWER variables; grid points are 5-degree samples, not area averages.
 - NASA POWER's bundled meteorological variables are MERRA-2 reanalysis, not direct satellite observations. Root-zone soil wetness is not NDVI, and historical fire detections are unavailable in this archive.
-- Trend windows only display records supplied by the active source. The optional Sri Lanka mock/live sources have shorter histories than the global archive.
-- Isolation Forest flags the top 8% most isolated cells by design; a *compound anomaly* additionally needs ≥ 2 indicator flags.
+- Trend windows only display records supplied by the active source. 
+- Historical Isolation Forest uses 8% training contamination; holdout anomaly rates may differ; a *compound anomaly* additionally needs ≥ 2 indicator flags.
 - The token-signing secret is generated per database; set `CORS_ORIGINS` if you host the UI elsewhere.
+
+## Historical trained submission extension
+See [training/README.md](training/README.md) for actual coverage, model artifacts, notebook instructions, chronological validation and missing satellite products. Four country-specific persisted Isolation Forests are integrated into archive dashboard inference. The original proposal describes a broader future satellite implementation.
+
+## Submission verification
+The archive-only release removes simulated JSON, the legacy regional grid, the live adapter with simulated fallback, and the demonstration fire notebook. Four persisted models are unchanged. The original proposal is retained for comparison; real NDVI, LST, IMERG and historical FIRMS remain future work. The backend tests exercise the actual archive and all four persisted country models. Frontend build verification remains pending because npm dependencies were not available in the local cache.
