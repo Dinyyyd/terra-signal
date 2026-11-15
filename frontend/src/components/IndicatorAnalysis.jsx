@@ -24,8 +24,8 @@ const ANALYSES = [
     legend: [['#22c55e', '|Z| < 1 normal'], ['#eab308', '1 ≤ |Z| < 2 elevated'], ['#f97316', '2 ≤ |Z| < 3 moderate'], ['#ef4444', '|Z| ≥ 3 extreme']]
   },
   {
-    id: 'vegetation', label: 'Vegetation', icon: Leaf,
-    description: 'Color shows percentage change against the same-month baseline: green is stable or increasing, while orange and red show increasing decline. The archive uses root-zone soil wetness as its vegetation proxy, not NDVI.',
+    id: 'vegetation', label: 'Soil wetness', icon: Leaf,
+    description: 'Color shows percentage change against the same-month baseline: green is stable or increasing, while orange and red show increasing decline. The archive measures root-zone soil wetness, not NDVI.',
     legend: [['#ef4444', '≤ −15% decline'], ['#f97316', '−15% to −5% watch'], ['#eab308', '−5% to 0% slight decline'], ['#22c55e', '≥ 0% stable / increase']]
   },
   {

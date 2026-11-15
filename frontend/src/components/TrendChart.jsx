@@ -14,7 +14,7 @@ const PRESETS = [
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 const CFG = {
   temperature: { key: 'current', base: 'baseline', color: '#fb923c', fill: 'rgba(251,146,60,.08)', unit: '°C' },
-  vegetation: { key: 'current_ndvi', base: 'baseline_ndvi', color: '#4ade80', fill: 'rgba(74,222,128,.08)', unit: 'NDVI' },
+  vegetation: { key: 'current_ndvi', base: 'baseline_ndvi', color: '#4ade80', fill: 'rgba(74,222,128,.08)', unit: 'fraction' },
   precipitation: { key: 'current_mm', base: 'baseline_mm', color: '#38bdf8', fill: 'rgba(56,189,248,.08)', unit: 'mm/day' }
 }
 

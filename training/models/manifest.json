@@ -1,0 +1,42 @@
+{
+  "sklearn_version": "1.8.0",
+  "baseline": "2011\u20132020",
+  "fit": "2021\u20132023",
+  "holdout": "2024\u20132025",
+  "features": [
+    "z_temp",
+    "soil_delta_pct",
+    "z_rain"
+  ],
+  "countries": {
+    "Australia": {
+      "cells": 30,
+      "fit_rows": 1080,
+      "holdout_rows": 720,
+      "holdout_anomaly_fraction": 0.07361111111111111,
+      "model": "australia.joblib"
+    },
+    "India": {
+      "cells": 12,
+      "fit_rows": 432,
+      "holdout_rows": 288,
+      "holdout_anomaly_fraction": 0.03819444444444445,
+      "model": "india.joblib"
+    },
+    "United Kingdom": {
+      "cells": 2,
+      "fit_rows": 72,
+      "holdout_rows": 48,
+      "holdout_anomaly_fraction": 0.08333333333333333,
+      "model": "united_kingdom.joblib"
+    },
+    "United States of America": {
+      "cells": 48,
+      "fit_rows": 1728,
+      "holdout_rows": 1152,
+      "holdout_anomaly_fraction": 0.1032986111111111,
+      "model": "united_states_of_america.joblib"
+    }
+  },
+  "limitations": "Unsupervised; no ground truth. Soil wetness is not NDVI. No historical fire or LST."
+}

@@ -1,4 +1,4 @@
-"""SQLite cache of the last good dashboard payload per location (offline / fail-safe demo)."""
+"""SQLite cache of the last good dashboard payload per location (historical archive only)."""
 import json
 
 from services.security import db
@@ -14,4 +14,9 @@ def load(location: str) -> dict | None:
     with db() as conn:
         row = conn.execute("SELECT payload, updated_at FROM dashboard_cache WHERE location=?",
                            (location,)).fetchone()
-    return {"updated_at": row["updated_at"], "payload": json.loads(row["payload"])} if row else None
+    if not row:
+        return None
+    payload = json.loads(row["payload"])
+    if payload.get("source_mode") != "ARCHIVE":
+        return None
+    return {"updated_at": row["updated_at"], "payload": payload}

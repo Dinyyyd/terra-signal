@@ -26,7 +26,7 @@ const BOUNDARY_LAYER = {
 }
 const LAYERS = [
 { key: 'temperature', label: 'Temperature', color: '#fb923c' },
-{ key: 'vegetation', label: 'Vegetation', color: '#4ade80' },
+{ key: 'vegetation', label: 'Soil wetness', color: '#4ade80' },
 { key: 'precipitation', label: 'Precipitation', color: '#38bdf8' },
   { key: 'fires', label: 'Active fires', color: '#f43f5e' },
   { key: 'anomalies', label: 'ML outliers', color: '#e879f9' }
